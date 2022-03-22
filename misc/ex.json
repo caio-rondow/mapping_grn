@@ -1,0 +1,21 @@
+{
+    "PE": [
+
+        {
+            "neighbors": [1,2],
+            "id": 0
+        },
+        {
+            "neighbors": [2],
+            "id": 1
+        },
+        {
+            "neighbors": [1],
+            "id": 2
+        },
+        {
+            "neighbors": [0,1,2],
+            "id": 3
+        }
+    ]
+}
