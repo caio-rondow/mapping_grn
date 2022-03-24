@@ -2,22 +2,21 @@ import json
 import networkx as nx
 import pydot
 
-f = open('mesh_8x8.json')
-
-data = json.load(f)
-
 
 # read json and get id and neighbors 
 def get_nodes_and_edges(data):
     nodes = []
     edges = {}
 
-    for i in data['PE']:
+    for i in data['pe']:
         node = i['id']
         nodes.append(node)
         edges[node] = i['neighbors']
 
     return nodes, edges
+
+def get_grid_dimension(data):
+    return data['data_width']
 
 # build digraph
 def make_digraph(data):
@@ -35,7 +34,6 @@ def make_digraph(data):
     return G
 
 
-G = make_digraph(data)
-PG = nx.nx_pydot.to_pydot(G)
-
-print(PG)
+# networkx graph to .dot
+def nx_2_dot(graph):
+    return nx.nx_pydot.to_pydot(graph) 
