@@ -4,8 +4,9 @@ from turtle import position
 import json2graph
 import networkx as nx
 import json
-from pyvis import  network as net
-
+from pyvis import network as net
+import math 
+import random as rand
 
 class mappingGRN:
 
@@ -16,7 +17,7 @@ class mappingGRN:
         self.g1 = json2graph.make_digraph(json.load(f))
         nx.set_edge_attributes(self.g1,1,'weight')
 
-
+        self.wcase = 0
         self.r_mapping = {}
         self.cost = 0
 
@@ -175,13 +176,64 @@ class mappingGRN:
     def arc_2_grn(self,int):
         return self.r_mapping[int]
 
+    def get_worstcase(self):
+        return self.wcase
+
     def total_edge_cost(self,graph) -> int:
         for edge in graph.edges():
             x = self.grn_2_arc(edge[0])
             y = self.grn_2_arc(edge[1])
-
-            self.cost += nx.dijkstra_path_length(self.g1,x,y)
+            dist_xy = nx.dijkstra_path_length(self.g1,x,y)
+            self.cost += dist_xy
+            if dist_xy > self.wcase: self.wcase = dist_xy
 
         return self.cost
-            
 
+    def evaluate_move(self,graph,u,v,total,T):
+        localCost=0
+        newLocalCost=0
+        
+        # Local cost from peW to peU + New Local Cost from peW to peV
+        for w in graph.neighbors(u):
+            localCost       += nx.dijkstra_path_length(graph,w,u)
+            newLocalCost    += nx.dijkstra_path_length(graph,w,v)
+
+        # Local cost from peW to peV + New Local Cost from peW to peU
+        for w in graph.neighbors(v):
+            localCost       += nx.dijkstra_path_length(graph,w,v)
+            newLocalCost    += nx.dijkstra_path_length(graph,w,u)
+
+        # Get New Cost
+        newCost = total-localCost+newLocalCost
+
+        # prob to get a good swap...
+        dE        = abs(newCost - total)
+        accProb   = math.exp( -1 * ( dE/T ) )
+
+        return newCost, accProb 
+
+    def SWAP(self,peU,peV,u,v):
+            # Swap peU content with peV content
+            self.r_mapping.update({peU:v, peV:u})
+
+    def simulated_annealing(self, graph):
+        T=100
+        total=self.total_edge_cost(graph)
+
+        while(T>0.00001):
+            # Choose a random Pe between [0, mesh_nXn-1](arc 8x8) - 
+            # não da pq o dicionário é a quantidade de nodos da grn
+            peU,peV = rand.randint(0,4), rand.randint(0,4)
+
+            # Get a node from GRN mapped on CGRN
+            u,v = self.arc_2_grn(peU), self.arc_2_grn(peV)
+
+            # Calculate new Cost
+            newC,accProb = self.evaluate_move(graph,u,v,total,T)
+
+            # If it's a good swap
+            if(newC < total or rand.random() < accProb):
+                self.SWAP(peU,peV,u,v)
+
+            # Decrease temp 
+            T *= 0.999
