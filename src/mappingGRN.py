@@ -21,7 +21,6 @@ class mappingGRN:
         self.r_mapping = {}
         self.cost = 0
 
-
     def get_digraph(self) -> nx.DiGraph:
         return self.digraph
 
@@ -169,17 +168,20 @@ class mappingGRN:
         key_list = list(self.r_mapping.keys())
         val_list = list(self.r_mapping.values())
 
-        position = val_list.index(node)
+        try:    position = val_list.index(node)
+        except: return node
 
         return key_list[position]
 
     def arc_2_grn(self,int):
-        return self.r_mapping[int]
-
+        try:    return self.r_mapping[int]
+        except: return int
+       
     def get_worstcase(self):
         return self.wcase
 
     def total_edge_cost(self,graph) -> int:
+        self.cost,self.wcase=0,0
         for edge in graph.edges():
             x = self.grn_2_arc(edge[0])
             y = self.grn_2_arc(edge[1])
@@ -189,51 +191,45 @@ class mappingGRN:
 
         return self.cost
 
-    def evaluate_move(self,graph,u,v,total,T):
-        localCost=0
-        newLocalCost=0
-        
-        # Local cost from peW to peU + New Local Cost from peW to peV
-        for w in graph.neighbors(u):
-            localCost       += nx.dijkstra_path_length(graph,w,u)
-            newLocalCost    += nx.dijkstra_path_length(graph,w,v)
-
-        # Local cost from peW to peV + New Local Cost from peW to peU
-        for w in graph.neighbors(v):
-            localCost       += nx.dijkstra_path_length(graph,w,v)
-            newLocalCost    += nx.dijkstra_path_length(graph,w,u)
-
-        # Get New Cost
-        newCost = total-localCost+newLocalCost
-
-        # prob to get a good swap...
-        dE        = abs(newCost - total)
-        accProb   = math.exp( -1 * ( dE/T ) )
-
-        return newCost, accProb 
-
-    def SWAP(self,peU,peV,u,v):
-            # Swap peU content with peV content
-            self.r_mapping.update({peU:v, peV:u})
-
     def simulated_annealing(self, graph):
         T=100
         total=self.total_edge_cost(graph)
 
         while(T>0.00001):
-            # Choose a random Pe between [0, mesh_nXn-1](arc 8x8) - 
-            # não da pq o dicionário é a quantidade de nodos da grn
-            peU,peV = rand.randint(0,4), rand.randint(0,4)
+            # Choose a random Pe between [0, mesh_nXn-1]
+            peU,peV = rand.randint(0, self.g1.__len__()-1 ), rand.randint(0, self.g1.__len__()-1 )
 
             # Get a node from GRN mapped on CGRN
             u,v = self.arc_2_grn(peU), self.arc_2_grn(peV)
 
+            newC,localC,newLocalC=0,0,0 
             # Calculate new Cost
-            newC,accProb = self.evaluate_move(graph,u,v,total,T)
+            if (graph.has_node(u)==True):
+                for w in graph.neighbors(u):
+                    # Dist só para os vizinhos de u
+                    if w==u: continue
+                    peW = self.grn_2_arc(w)
+                    localC      += nx.dijkstra_path_length(self.g1,peU,peW)
+                    newLocalC   += nx.dijkstra_path_length(self.g1,peV,peW)
+            
+            if (graph.has_node(v)==True):
+                for w in graph.neighbors(v):
+                    # Dist só para os vizinhos de v
+                    if w==v: continue
+                    peW = self.grn_2_arc(w)
+                    localC      += nx.dijkstra_path_length(self.g1,peV,peW)
+                    newLocalC   += nx.dijkstra_path_length(self.g1,peU,peW)
 
+            newC    = total-localC+newLocalC      
+            # newC < total => -localC+newLocalC < 0 => newLocalC < localC
+            # portanto, ou newLocalC >= localC ou rand.random() < accProb 
+            dE      = abs(newC - total)
+            accProb = math.exp(-1 * (dE/T) )
+            
             # If it's a good swap
             if(newC < total or rand.random() < accProb):
-                self.SWAP(peU,peV,u,v)
+                # Swap peU content with peV content
+                self.r_mapping.update({peU:v, peV:u})
 
             # Decrease temp 
             T *= 0.999
