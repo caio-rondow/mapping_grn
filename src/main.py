@@ -18,12 +18,7 @@ def main():
     cost = mapping.total_edge_cost(GRN)
 
     print(cost)
-
-
-
     
-
-
     print(dict)
 
 
