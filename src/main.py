@@ -17,6 +17,5 @@ def main():
     print("C::",cost)
     print("WC::",wcase)
 
-
 if __name__ == '__main__':
     main()

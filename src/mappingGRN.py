@@ -188,7 +188,6 @@ class mappingGRN:
             dist_xy = nx.dijkstra_path_length(self.g1,x,y)
             self.cost += dist_xy
             if dist_xy > self.wcase: self.wcase = dist_xy
-
         return self.cost
 
     def simulated_annealing(self, graph):
@@ -206,23 +205,29 @@ class mappingGRN:
             # Calculate new Cost
             if (graph.has_node(u)==True):
                 for w in graph.neighbors(u):
-                    # Dist só para os vizinhos de u
-                    if w==u: continue
+                    if w==u: continue # Calculate distance only btw neighbors of v
                     peW = self.grn_2_arc(w)
                     localC      += nx.dijkstra_path_length(self.g1,peU,peW)
-                    newLocalC   += nx.dijkstra_path_length(self.g1,peV,peW)
+                    newLocalC   += nx.dijkstra_path_length(self.g1,peV,peW)       
+                for w in graph.predecessors(u):
+                    if w==u: continue # Calculate distance only btw neighbors of v
+                    peW = self.grn_2_arc(w)
+                    localC      += nx.dijkstra_path_length(self.g1,peW,peU)
+                    newLocalC   += nx.dijkstra_path_length(self.g1,peW,peV)
             
             if (graph.has_node(v)==True):
                 for w in graph.neighbors(v):
-                    # Dist só para os vizinhos de v
-                    if w==v: continue
+                    if w==v: continue # Calculate distance only btw neighbors of v
                     peW = self.grn_2_arc(w)
                     localC      += nx.dijkstra_path_length(self.g1,peV,peW)
                     newLocalC   += nx.dijkstra_path_length(self.g1,peU,peW)
+                for w in graph.predecessors(v):
+                    if w==v: continue # Calculate distance only btw neighbors of v
+                    peW = self.grn_2_arc(w)
+                    localC      += nx.dijkstra_path_length(self.g1,peW,peV)
+                    newLocalC   += nx.dijkstra_path_length(self.g1,peW,peU)
 
             newC    = total-localC+newLocalC      
-            # newC < total => -localC+newLocalC < 0 => newLocalC < localC
-            # portanto, ou newLocalC >= localC ou rand.random() < accProb 
             dE      = abs(newC - total)
             accProb = math.exp(-1 * (dE/T) )
             
