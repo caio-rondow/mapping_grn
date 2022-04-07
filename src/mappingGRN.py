@@ -13,8 +13,8 @@ class mappingGRN:
 
     def __init__(self,file_path) -> None:
         f = open(file_path)
-        self.g1 = json2graph.make_digraph(json.load(f))
-        nx.set_edge_attributes(self.g1,1,'weight')
+        self.arc = json2graph.make_digraph(json.load(f))
+        nx.set_edge_attributes(self.arc,1,'weight')
 
 
         self.r_mapping = {}
@@ -25,7 +25,7 @@ class mappingGRN:
         return self.digraph
 
     def get_dot(self) -> None:
-        print(json2graph.nx_2_dot(self.g1))
+        print(json2graph.nx_2_dot(self.arc))
 
     # Graph visualization with Pyvis
     def graph_visu(self,__directed=True) -> None:
@@ -37,7 +37,7 @@ class mappingGRN:
         nt.show('digraph_visualization.html')
 
 
-    def adjust_node(self,G: nx.DiGraph,node,out_degree,i=0) -> None:
+    def adjust_node(self,G: nx.DiGraph,node,out_degree) -> None:
         """ Create auxiliary nodes in a GRN if the out_degree of a gene is up to 4, 
             connecting this gene with the new node
 
@@ -117,12 +117,12 @@ class mappingGRN:
         return G
         
     def is_monomorphism(self,GRN: nx.DiGraph) -> bool:
-        m = nx.algorithms.isomorphism.DiGraphMatcher(self.g1,GRN)
+        m = nx.algorithms.isomorphism.DiGraphMatcher(self.arc,GRN)
         return m.subgraph_is_monomorphic()
 
     def get_monomorphism(self,GRN: nx.DiGraph) -> list:
         if(self.is_monomorphism(GRN)):
-            m = nx.algorithms.isomorphism.DiGraphMatcher(self.g1,GRN)
+            m = nx.algorithms.isomorphism.DiGraphMatcher(self.arc,GRN)
             m_list = list(m.subgraph_monomorphisms_iter())
         
         return m_list
@@ -144,7 +144,7 @@ class mappingGRN:
             ----------  
         """
 
-        for arc_node,graph_node in zip(self.g1.nodes(),graph.nodes()):
+        for arc_node,graph_node in zip(self.arc.nodes(),graph.nodes()):
             self.r_mapping[arc_node] = graph_node
     
         return self.r_mapping 
@@ -155,12 +155,14 @@ class mappingGRN:
 
             Parameters
             ----------
-            node: string
+            node: node label
                 A node in the GRN graph
+                Nodes can be, for example, strings or numbers. Nodes must be hashable (and not None) Python objects.
 
             Returns
             ----------
-            A node in the CGRA.
+            key_list[position]: node label
+                A node in the CGRA. If the node used as parameter is not in the GRN, returns the node itself.
 
             Notes
             -
@@ -168,20 +170,44 @@ class mappingGRN:
         key_list = list(self.r_mapping.keys())
         val_list = list(self.r_mapping.values())
 
-        position = val_list.index(node)
+        try:
+            position = val_list.index(node)
+        except KeyError:
+            position = node
 
         return key_list[position]
 
     def arc_2_grn(self,int):
-        return self.r_mapping[int]
+        """ Give one node in the CGRA, return the GRN's node thats is mapping in int.
+
+            Parameters
+            ----------
+            int: node label
+                A node in the CGRA graph
+                Nodes can be, for example, strings or numbers. Nodes must be hashable (and not None) Python objects.
+
+            Returns
+            ----------
+            grn_node: node label
+                A node in the GRN. If the node used as parameter is not one that a GRN's node was mapped into, retunrs
+                int itsef
+
+            Notes
+            -
+        """
+        try:
+            grn_node = self.r_mapping[int]
+        except KeyError:
+            grn_node = int
+        
+        return grn_node
 
     def total_edge_cost(self,graph) -> int:
         for edge in graph.edges():
             x = self.grn_2_arc(edge[0])
             y = self.grn_2_arc(edge[1])
 
-            self.cost += nx.dijkstra_path_length(self.g1,x,y)
+            self.cost += nx.dijkstra_path_length(self.arc,x,y)
 
         return self.cost
-            
 
