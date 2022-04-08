@@ -220,6 +220,35 @@ class mappingGRN:
             Aplies Simulated Annealing algorithm on a GRN mapped into CGRA
             - Starts with a random mapped GRN
             - Expected to end up with a lower cost mapped GRN  
+
+            Template
+            --------
+            let 'T' be the temperature, 'total' the total edge cost and 'n' the mesh length.
+
+            T       <- 100
+            total   <- total_edge_cost()
+
+            while T>0.00001:
+                choose random pe's:
+                    peU,peV <- rand( [0, n²) ), rand( [0, n²) )
+
+                map pe's to grn nodes:
+                    u,v <- CGRA_2_GRN(peU), CGRA_2_GRN(peV)
+
+                Calculate new cost:
+                    if u is a node from grn then:
+                        evaluate_move(u,v,peU,peV)                
+                    if v is a node from grn then:
+                        evaluate_move(v,u,peV,peU)
+                    newC <- local_cost + new_local_cost
+
+                Calculate acceptance probability:
+                    accProb <- exp(-1 * (dE/T) )
+
+                if newC < total or rand([0,...,1]) < accProb then:
+                    make a swap between peU and peV
+
+                decrease temperature
         """
         T=100                        # Start Simulated Annealing temperature
         total=self.total_edge_cost() # Calculate current total edge cost
