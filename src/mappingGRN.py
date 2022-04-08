@@ -223,7 +223,7 @@ class mappingGRN:
 
             Template
             --------
-            let 'T' be the temperature, 'total' the total edge cost and 'n' the mesh length.
+            let 'T' be the temperature, 'total' the total edge cost and 'n' the arc length.
 
             T       <- 100
             total   <- total_edge_cost()
