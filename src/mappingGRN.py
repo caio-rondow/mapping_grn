@@ -12,17 +12,24 @@ class mappingGRN:
 
     _instance = None
 
-    def __init__(self,file_path) -> None:
-        f = open(file_path)
-        self.g1 = json2graph.make_digraph(json.load(f))
+    def __init__(self,file_path,graph) -> None:
+        f               = open(file_path)
+        self.g1         = json2graph.make_digraph(json.load(f))
+        self.r_mapping  = {}
+        self.grn        = graph
+        self.wcase      = 0
+        self.cost       = 0
+        
         nx.set_edge_attributes(self.g1,1,'weight')
-
-        self.wcase = 0
-        self.r_mapping = {}
-        self.cost = 0
 
     def get_digraph(self) -> nx.DiGraph:
         return self.digraph
+    
+    def set_grn(self,graph: nx.DiGraph()) -> None:
+        self.grn = graph
+        self.r_mapping = {}
+        self.random_mapping()
+        self.wcase,self.cost=0,0
 
     def get_dot(self) -> None:
         print(json2graph.nx_2_dot(self.g1))
@@ -35,7 +42,6 @@ class mappingGRN:
         nt.save_graph('digraph_visualization.html')
         # Download the .html
         nt.show('digraph_visualization.html')
-
 
     def adjust_node(self,G: nx.DiGraph,node,out_degree,i=0) -> None:
         """ Create auxiliary nodes in a GRN if the out_degree of a gene is up to 4, 
@@ -79,17 +85,10 @@ class mappingGRN:
 
         self.adjust_node(G,new_node_name,G.out_degree(new_node_name))
 
-
     def merge_nodes(self,G: nx.DiGraph,merge_nodes: list) -> None:
-
-
-
         for m_node in merge_nodes[1:]:
             nx.contracted_nodes(G,merge_nodes[0],m_node,copy=False)
         
-
-
-
     def adjust_GRN(self,GRN: nx.DiGraph) -> nx.DiGraph:
         """ Create auxiliary nodes in a GRN if the out_degree of a gene is up to 4, 
             connecting this gene with the new node
@@ -127,7 +126,7 @@ class mappingGRN:
         
         return m_list
 
-    def randon_mapping(self,graph: nx.DiGraph) -> dict:
+    def random_mapping(self) -> dict:
         """ Return a dictionary where the keys are nodes in the architecture and the values are random nodes from the graph.
 
             Parameters
@@ -143,12 +142,9 @@ class mappingGRN:
             Notes
             ----------  
         """
-
-        for arc_node,graph_node in zip(self.g1.nodes(),graph.nodes()):
-            self.r_mapping[arc_node] = graph_node
-    
+        for arc_node,grn_node in zip(self.g1.nodes(),self.grn.nodes()):
+            self.r_mapping[arc_node] = grn_node
         return self.r_mapping 
-
 
     def grn_2_arc(self,node):
         """ Give one node in the GRN, return the CGRA's node that it is in.
@@ -170,7 +166,6 @@ class mappingGRN:
 
         try:    position = val_list.index(node)
         except: return node
-
         return key_list[position]
 
     def arc_2_grn(self,int):
@@ -180,19 +175,54 @@ class mappingGRN:
     def get_worstcase(self):
         return self.wcase
 
-    def total_edge_cost(self,graph) -> int:
+    def total_edge_cost(self) -> int:
+        """
+            Returns the total edge cost from peX to peY.
+            Also calculates the worst case cost.
+        """
+        # Reset costs
         self.cost,self.wcase=0,0
-        for edge in graph.edges():
+        for edge in self.grn.edges():
+            # Get edge xy from grn
             x = self.grn_2_arc(edge[0])
             y = self.grn_2_arc(edge[1])
+
+            # Calcualte distance between peX and peY
             dist_xy = nx.dijkstra_path_length(self.g1,x,y)
             self.cost += dist_xy
+
+            # Calculate worst case
             if dist_xy > self.wcase: self.wcase = dist_xy
         return self.cost
 
-    def simulated_annealing(self, graph):
-        T=100
-        total=self.total_edge_cost(graph)
+    def evaluate_move(self,u,v,peU,peV) -> int:
+        """
+            Returns the local cost from peU to all neighbors peW and
+            the new local cost from peU (where peU is on peV) to
+            to all neighbors peW.
+        """
+        localC,newLocalC=0,0 
+        if (self.grn.has_node(u)==True):
+            for w in self.grn.neighbors(u):
+                if w==u: continue # Calculate distance only btw neighbors of v
+                peW = self.grn_2_arc(w)
+                localC      += nx.dijkstra_path_length(self.g1,peU,peW)
+                newLocalC   += nx.dijkstra_path_length(self.g1,peV,peW)    
+            for w in self.grn.predecessors(u):
+                if w==u: continue # Calculate distance only btw neighbors of v
+                peW = self.grn_2_arc(w)
+                localC      += nx.dijkstra_path_length(self.g1,peW,peU)
+                newLocalC   += nx.dijkstra_path_length(self.g1,peW,peV)
+        return localC, newLocalC
+
+    def simulated_annealing(self) -> None:
+        """ 
+            Aplies Simulated Annealing algorithm on a GRN mapped into CGRA
+            - Starts with a random mapped GRN
+            - Expected to end up with a lower cost mapped GRN  
+        """
+        T=100                        # Start Simulated Annealing temperature
+        total=self.total_edge_cost() # Calculate current total edge cost
 
         while(T>0.00001):
             # Choose a random Pe between [0, mesh_nXn-1]
@@ -201,33 +231,17 @@ class mappingGRN:
             # Get a node from GRN mapped on CGRN
             u,v = self.arc_2_grn(peU), self.arc_2_grn(peV)
 
-            newC,localC,newLocalC=0,0,0 
-            # Calculate new Cost
-            if (graph.has_node(u)==True):
-                for w in graph.neighbors(u):
-                    if w==u: continue # Calculate distance only btw neighbors of v
-                    peW = self.grn_2_arc(w)
-                    localC      += nx.dijkstra_path_length(self.g1,peU,peW)
-                    newLocalC   += nx.dijkstra_path_length(self.g1,peV,peW)       
-                for w in graph.predecessors(u):
-                    if w==u: continue # Calculate distance only btw neighbors of v
-                    peW = self.grn_2_arc(w)
-                    localC      += nx.dijkstra_path_length(self.g1,peW,peU)
-                    newLocalC   += nx.dijkstra_path_length(self.g1,peW,peV)
+            # Calculate new Cost newC
+            lc1,lc2,nlc1,nlc2=0,0,0,0
+            if (self.grn.has_node(u)==True):
+                lc1,nlc1 = self.evaluate_move(u,v,peU,peV)
+            if (self.grn.has_node(v)==True):
+                lc2,nlc2 = self.evaluate_move(v,u,peV,peU)
+            lc      = lc1+lc2
+            nlc     = nlc1+nlc2 
+            newC    = total-lc+nlc      
             
-            if (graph.has_node(v)==True):
-                for w in graph.neighbors(v):
-                    if w==v: continue # Calculate distance only btw neighbors of v
-                    peW = self.grn_2_arc(w)
-                    localC      += nx.dijkstra_path_length(self.g1,peV,peW)
-                    newLocalC   += nx.dijkstra_path_length(self.g1,peU,peW)
-                for w in graph.predecessors(v):
-                    if w==v: continue # Calculate distance only btw neighbors of v
-                    peW = self.grn_2_arc(w)
-                    localC      += nx.dijkstra_path_length(self.g1,peW,peV)
-                    newLocalC   += nx.dijkstra_path_length(self.g1,peW,peU)
-
-            newC    = total-localC+newLocalC      
+            # Calculate acceptance probability
             dE      = abs(newC - total)
             accProb = math.exp(-1 * (dE/T) )
             
