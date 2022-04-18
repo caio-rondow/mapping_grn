@@ -303,7 +303,7 @@ class mappingGRN:
                 self.r_mapping.update({peU:v, peV:u})
                 # progression of costs and num. of swaps
                 if self.ctSwap%8==0: 
-                    self.allCost.append(self.total_edge_cost())
+                    self.allCost.append( [self.total_edge_cost(), self.ctSwap] )
                 self.ctSwap += 1
 
             # Decrease temp 

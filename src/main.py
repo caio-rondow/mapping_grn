@@ -1,15 +1,11 @@
 from mappingGRN import mappingGRN
-import networkx as nx
+from visualGraph import sa_curve
 from grn2dot.grn2dot import Grn2dot
-import json2graph
 from pyvis import  network as net
+import networkx as nx
+import json2graph
 
-def main():
-    grn2dot = Grn2dot('misc/Benchmark_188.txt')
-    GRN = grn2dot.get_nx_digraph()
-    
-    mapping = mappingGRN('misc/mesh_15x15.json', GRN)
-    
+def printMap(mapping):
     print('==================================')
     print('INITIAL ARC', end='')
     mapping.display_arc()
@@ -43,8 +39,18 @@ def main():
     print( 'nS::{}'.format(nS) )
     print( 'aC::{}'.format(aC) )
     
-    print('==================================')   
+    print('==================================') 
 
+def main():
+    grn2dot = Grn2dot('misc/Benchmark_5.txt') 
+    GRN = grn2dot.get_nx_digraph()
+    
+    mapping = mappingGRN('misc/mesh_8x8.json', GRN)
+    #printMap(mapping)
+
+    mapping.simulated_annealing()
+    data = mapping.get_allcost()
+    sa_curve(data)
 
 if __name__ == '__main__':
     main()
