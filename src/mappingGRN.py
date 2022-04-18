@@ -29,6 +29,8 @@ class mappingGRN:
     def set_grn(self, graph: nx.DiGraph() ) -> None:
         # init values
         self.wcase = self.cost = 0
+        self.ctSwap = 0
+        self.allCost=[]
         self.r_mapping = {}
         self.grn = graph
 
@@ -51,13 +53,22 @@ class mappingGRN:
         return self.wcase
 
 
+    def get_allcost(self) -> None:
+        return self.allCost
+
+    
+    def get_num_swaps(self) -> None:
+        return self.ctSwap
+
+
     def get_dot(self) -> None:
         print(json2graph.nx_2_dot(self.cgra))
 
 
     def display_arc(self):
+        bline = math.sqrt(self.arc_size)
         for i in range(self.arc_size):
-            if i%8==0 : print()
+            if i%bline==0 : print()
             node = self.__arc_2_grn(i)
             if(self.grn.has_node(node)):
                 print(node[1], end=' ')
@@ -280,7 +291,7 @@ class mappingGRN:
 
             # Calculate new cost 
             new_cost = self.__switching_cost(u,v,peU,peV,init_cost)
-        
+
             # Calculate acceptance probability
             dC      = abs(new_cost - init_cost) # variation of cost, delta C
             accProb = math.exp(-1 * (dC/T) )
@@ -290,6 +301,10 @@ class mappingGRN:
             if is_good:
                 # Swap peU content with peV content
                 self.r_mapping.update({peU:v, peV:u})
+                # progression of costs and num. of swaps
+                if self.ctSwap%8==0: 
+                    self.allCost.append(self.total_edge_cost())
+                self.ctSwap += 1
 
             # Decrease temp 
             T *= 0.999

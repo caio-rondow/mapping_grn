@@ -5,11 +5,10 @@ import json2graph
 from pyvis import  network as net
 
 def main():
-    grn2dot = Grn2dot('misc/B_bronchiseptica_and_T_retortaeformis_coinfectio_53.txt')
-
+    grn2dot = Grn2dot('misc/Benchmark_188.txt')
     GRN = grn2dot.get_nx_digraph()
     
-    mapping = mappingGRN('misc/mesh_8x8.json', GRN)
+    mapping = mappingGRN('misc/mesh_15x15.json', GRN)
     
     print('==================================')
     print('INITIAL ARC', end='')
@@ -35,10 +34,17 @@ def main():
     
     dC = abs(Cf-Co)
     dW = abs(Wf-Wo)
+    nS = mapping.get_num_swaps()
+    aC = mapping.get_allcost()
 
     print( '\ndC::{}'.format(dC) )
     print( 'dW::{}'.format(dW) )
-    print('==================================')
+
+    print( 'nS::{}'.format(nS) )
+    print( 'aC::{}'.format(aC) )
+    
+    print('==================================')   
+
 
 if __name__ == '__main__':
     main()
