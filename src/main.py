@@ -1,26 +1,39 @@
+from matplotlib.pyplot import plot
+from numpy import dtype
 from mappingGRN import mappingGRN
 import networkx as nx
 from grn2dot.grn2dot import Grn2dot
-import json2graph
+import json2graph as json2graph
 from pyvis import  network as net
+import pandas as pd
+import matplotlib.pyplot as plt
+import pydot
+
+
 
 
 def main():
-    grn2dot = Grn2dot('misc\Benchmark_5.txt')
-    mapping = mappingGRN('misc\mesh_8x8.json')
+    grn2dot = Grn2dot('misc/Benchmark_5.txt')
     GRN = grn2dot.get_nx_digraph()
-
-    G = mapping.adjust_GRN(GRN)
     
+    mapping = mappingGRN('misc/mesh_8x8.json', GRN)
+    #mapping.simulated_annealing()
 
-    dict = mapping.randon_mapping(GRN)
+    # data = mapping.get_allcost()
 
-    cost = mapping.total_edge_cost(GRN)
+    # df = pd.DataFrame(data)
 
-    print(cost)
+    # fig = plt.figure()
+    # ax = fig.add_subplot(1, 1, 1)
+    # ax.plot(df[1], df[0], color='tab:blue')
+
+    # plt.show()
+
+    arc = mapping.get_nx_arc()
+
+
+
     
-    print(dict)
-
 
 
 if __name__ == '__main__':
