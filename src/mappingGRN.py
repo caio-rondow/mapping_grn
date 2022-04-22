@@ -1,12 +1,17 @@
 from asyncio import new_event_loop
+from dbm import dumb
 from opcode import opname
+from tokenize import Double
 from turtle import position
+
+from numpy import double
 import json2graph
 import networkx as nx
 import json
 from pyvis import network as net
 import math 
 import random as rand
+from tqdm import tqdm
 
 class mappingGRN:
 
@@ -239,6 +244,9 @@ class mappingGRN:
 
         return peU, peV
 
+    def __range(self,max,dec,min) -> int:
+        return (min / (max*dec))
+
 
     def simulated_annealing(self) -> None:
         """ 
@@ -282,8 +290,14 @@ class mappingGRN:
         # interval of pe's
         inf = 0
         sup = self.arc_size-1
+        _range = 16111
 
-        while(T>0.00001):
+        for interation in tqdm(
+            range(_range),
+            position=0,
+            leave = True,
+            desc= f"Simulated Annealing: "
+        ):
             # Choose random Pe's
             peU, peV = self.__randpes(inf,sup)
             
