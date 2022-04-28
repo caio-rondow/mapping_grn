@@ -4,7 +4,7 @@ from opcode import opname
 from tokenize import Double
 from turtle import position
 
-from numpy import double
+from numpy import double, mat
 import json2graph
 import networkx as nx
 import json
@@ -20,6 +20,7 @@ class mappingGRN:
     def __init__(self, file_path, graph) -> None:
         self.set_cgra(file_path)
         self.set_grn(graph)
+
 
 
     # SETS
@@ -42,35 +43,37 @@ class mappingGRN:
         self.__random_mapping()
 
     # GETS
-    def get_cgra(self) -> None:
+    def get_arc_size(self) -> int:
+        return self.arc_size
+
+    def get_cgra(self) -> nx.DiGraph:
         return self.cgra
 
 
-    def get_grn(self) -> None:
+    def get_grn(self) -> nx.DiGraph:
         return self.grn
 
 
-    def get_mapped_grn(self) -> None:
+    def get_mapped_grn(self) -> dict:
+        ''' Return r_mapping
+        '''
         return self.r_mapping
 
 
-    def get_worstcase(self):
+    def get_worstcase(self) -> int:
         return self.wcase
 
 
-    def get_allcost(self) -> None:
+    def get_allcost(self) -> int:
         return self.allCost
 
     
-    def get_num_swaps(self) -> None:
+    def get_num_swaps(self) -> int:
         return self.ctSwap
 
 
     def get_dot(self):
         return json2graph.nx_2_dot(self.cgra)
-
-    def get_nx_arc(self) -> nx.DiGraph:
-        return self.cgra
 
     def display_arc(self):
         bline = math.sqrt(self.arc_size)
@@ -245,7 +248,14 @@ class mappingGRN:
         return peU, peV
 
     def __range(self,max,dec,min) -> int:
-        return (min / (max*dec))
+        a_n = math.log10(min)
+        a_1 = math.log10(max)
+        q = math.log10(dec)
+
+        n =  ((a_n -  a_1) + q) / q
+
+        return int(n)
+    
 
 
     def simulated_annealing(self) -> None:
@@ -290,10 +300,10 @@ class mappingGRN:
         # interval of pe's
         inf = 0
         sup = self.arc_size-1
-        _range = 16111
+        n_range = self.__range(T,0.999,0.00001)
 
         for interation in tqdm(
-            range(_range),
+            range(n_range),
             position=0,
             leave = True,
             desc= f"Simulated Annealing: "

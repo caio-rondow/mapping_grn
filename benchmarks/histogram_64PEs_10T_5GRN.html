@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    .error {
+        color: red;
+    }
+  </style>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm//vega@5"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm//vega-lite@4.17.0"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm//vega-embed@6"></script>
+</head>
+<body>
+  <div id="vis"></div>
+  <script>
+    (function(vegaEmbed) {
+      var spec = {"config": {"view": {"continuousWidth": 400, "continuousHeight": 300}}, "data": {"name": "data-539f3c37192e878d1fd9199b10f4531a"}, "mark": "bar", "encoding": {"x": {"field": "PE", "type": "nominal"}, "y": {"field": "N times used", "type": "quantitative"}}, "$schema": "https://vega.github.io/schema/vega-lite/v4.17.0.json", "datasets": {"data-539f3c37192e878d1fd9199b10f4531a": [{"PE": 0, "N times used": 0}, {"PE": 1, "N times used": 0}, {"PE": 2, "N times used": 1}, {"PE": 3, "N times used": 0}, {"PE": 4, "N times used": 1}, {"PE": 5, "N times used": 0}, {"PE": 6, "N times used": 0}, {"PE": 7, "N times used": 0}, {"PE": 8, "N times used": 0}, {"PE": 9, "N times used": 1}, {"PE": 10, "N times used": 2}, {"PE": 11, "N times used": 1}, {"PE": 12, "N times used": 2}, {"PE": 13, "N times used": 0}, {"PE": 14, "N times used": 0}, {"PE": 15, "N times used": 0}, {"PE": 16, "N times used": 1}, {"PE": 17, "N times used": 1}, {"PE": 18, "N times used": 1}, {"PE": 19, "N times used": 2}, {"PE": 20, "N times used": 1}, {"PE": 21, "N times used": 0}, {"PE": 22, "N times used": 0}, {"PE": 23, "N times used": 0}, {"PE": 24, "N times used": 2}, {"PE": 25, "N times used": 2}, {"PE": 26, "N times used": 1}, {"PE": 27, "N times used": 2}, {"PE": 28, "N times used": 2}, {"PE": 29, "N times used": 1}, {"PE": 30, "N times used": 0}, {"PE": 31, "N times used": 0}, {"PE": 32, "N times used": 1}, {"PE": 33, "N times used": 1}, {"PE": 34, "N times used": 1}, {"PE": 35, "N times used": 1}, {"PE": 36, "N times used": 2}, {"PE": 37, "N times used": 1}, {"PE": 38, "N times used": 2}, {"PE": 39, "N times used": 1}, {"PE": 40, "N times used": 0}, {"PE": 41, "N times used": 3}, {"PE": 42, "N times used": 1}, {"PE": 43, "N times used": 1}, {"PE": 44, "N times used": 0}, {"PE": 45, "N times used": 1}, {"PE": 46, "N times used": 1}, {"PE": 47, "N times used": 1}, {"PE": 48, "N times used": 1}, {"PE": 49, "N times used": 2}, {"PE": 50, "N times used": 1}, {"PE": 51, "N times used": 0}, {"PE": 52, "N times used": 0}, {"PE": 53, "N times used": 0}, {"PE": 54, "N times used": 0}, {"PE": 55, "N times used": 0}, {"PE": 56, "N times used": 0}, {"PE": 57, "N times used": 2}, {"PE": 58, "N times used": 2}, {"PE": 59, "N times used": 0}, {"PE": 60, "N times used": 0}, {"PE": 61, "N times used": 0}, {"PE": 62, "N times used": 0}, {"PE": 63, "N times used": 0}]}};
+      var embedOpt = {"mode": "vega-lite"};
+
+      function showError(el, error){
+          el.innerHTML = ('<div class="error" style="color:red;">'
+                          + '<p>JavaScript Error: ' + error.message + '</p>'
+                          + "<p>This usually means there's a typo in your chart specification. "
+                          + "See the javascript console for the full traceback.</p>"
+                          + '</div>');
+          throw error;
+      }
+      const el = document.getElementById('vis');
+      vegaEmbed("#vis", spec, embedOpt)
+        .catch(error => showError(el, error));
+    })(vegaEmbed);
+
+  </script>
+</body>
+</html>
