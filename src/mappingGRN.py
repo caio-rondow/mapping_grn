@@ -8,7 +8,6 @@ from numpy import double, mat
 import json2graph
 import networkx as nx
 import json
-from pyvis import network as net
 import math 
 import random as rand
 from tqdm import tqdm
@@ -29,16 +28,27 @@ class mappingGRN:
         self.cgra       = json2graph.make_digraph(json.load(f))
         self.arc_size   = self.cgra.__len__()
         nx.set_edge_attributes(self.cgra,1,'weight')
+        nx.set_edge_attributes(self.cgra,'penwidth(0.1)','style')
+        nx.set_edge_attributes(self.cgra,'grey89','color')
+        nx.set_edge_attributes(self.cgra,' ','tooltip')
+
+
+        nx.set_node_attributes(self.cgra,'8','fontsize')
+        nx.set_node_attributes(self.cgra,'#FFc1c1','fillcolor')
+        nx.set_node_attributes(self.cgra,' ','label')
+        nx.set_node_attributes(self.cgra,' ','tooltip')
+
         f.close()
 
 
-    def set_grn(self, graph: nx.DiGraph() ) -> None:
+    def set_grn(self, graph: nx.DiGraph ) -> None:
         # init values
         self.wcase = self.cost = 0
         self.ctSwap = 0
         self.allCost=[]
         self.r_mapping = {}
         self.grn = graph
+
 
         self.__random_mapping()
 
@@ -100,14 +110,6 @@ class mappingGRN:
         return m_list
 
 
-    def graph_visu(self,__directed=True) -> None:
-        """ Graph visualization with Pyvis """
-        # Make a .html for download (nt.show() has some kind of problem on Colab)
-        nt = net.Network(directed = __directed)
-        nt.from_nx(self.digraph)
-        nt.save_graph('digraph_visualization.html')
-        # Download the .html
-        nt.show('digraph_visualization.html')
 
 
     def __random_mapping(self) -> None: 
@@ -161,6 +163,49 @@ class mappingGRN:
     def __arc_2_grn(self,int):
         try:    return self.r_mapping[int]
         except: return int
+
+    def graph_visu(self) -> nx.DiGraph:
+        """ Graph visualization with .dot 
+
+            1. Rodar o simulated annealing
+            2. pegar todas as conexões da grn e rodar elas no crga
+            2.1. para cada gene -> key referente no dict (source e target)
+            2.2. rodar dijkstra_path
+
+
+            Notes
+            ---------
+            Ainda a fazer;
+            1. rodar dijkstra_path e salvar cada custo não repetido em um dict sendo:
+                key = custo e valule = cor
+
+                color[distance] -> #FF0000
+
+        """
+        self.simulated_annealing()
+
+        for node in self.grn.nodes():
+            arch_node = self.__grn_2_arc(node)
+            nx.set_node_attributes(self.cgra, {arch_node: {'label':node}})
+
+                
+        for node in self.grn.nodes():
+            pe_source = self.__grn_2_arc(node)
+            for neighbor in self.grn.neighbors(node):
+                pe_target = self.__grn_2_arc(neighbor)
+                distance,path = nx.single_source_dijkstra(self.cgra,pe_source,pe_target)
+                color = ["#"+''.join([rand.choice('ABCDEF0123456789') for i in range(6)])]
+                if distance <= self.get_worstcase() * 0.5: continue
+                for path_node,i in zip(path,range(len(path))):
+                    if path_node == path[-1]: break
+                    self.cgra[path_node][path[i+1]]['color'] = color[0]
+                    self.cgra[path_node][path[i+1]]['tooltip'] = "{} to {}".format(node,neighbor)
+
+    
+        return self.get_cgra()
+
+        
+
        
 
     def total_edge_cost(self) -> int:
@@ -334,6 +379,7 @@ class mappingGRN:
 
             # Decrease temp 
             T *= 0.999
+
 
 
 

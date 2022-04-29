@@ -40,14 +40,6 @@ def sa_curve(data):
     plt.show()
 
 
-def print_dot(dot: pydot.Dot) -> None:
-
-
-
-    text_file = open("Output.dot", "w")
-    text_file.write(string_dot)
-    text_file.close()
-
 
 def build_dot(graph: pydot.Dot, nodes: list, dim: list) -> None:
 
@@ -106,15 +98,10 @@ def arch_struct(graph: nx.DiGraph):
     nx.set_node_attributes(graph,'square','shape')
     nx.set_node_attributes(graph,'false','fixedsize')
     nx.set_node_attributes(graph,'0.6','width')
-    nx.set_node_attributes(graph,'8','fontsize')
-    nx.set_node_attributes(graph,'#FFc1c1','fillcolor')
-    nx.set_node_attributes(graph,label_dict,'label')
-    nx.set_node_attributes(graph,' ','tooltip')
+
 
     # set all edges attributes
     nx.set_edge_attributes(graph,'false','constraint')
-    nx.set_edge_attributes(graph,'penwidth(0.1)','style')
-    nx.set_edge_attributes(graph,'grey89','color')
 
         
 
