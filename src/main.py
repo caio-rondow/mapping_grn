@@ -6,26 +6,26 @@ import visualGraph as visualGraph
 
 
 def main():
-    grn2dot = Grn2dot('misc/Benchmark_5.txt')
+    grn2dot = Grn2dot('misc/Benchmark_53.txt')
     GRN = grn2dot.get_nx_digraph()
 
-    mapping = mappingGRN('misc/mesh_8x8.json', GRN)
-    #mapping.simulated_annealing()
+    mapping = mappingGRN('misc/mesh_8x8_het.json', GRN)
+    # mapping.simulated_annealing()
 
-    ### GRAPH TOTAL_COST X N_SWAPS ###
-    # visualGraph.sa_curve(mapping.get_allcost())
     
-    arch = mapping.graph_visu()
 
     ### CGRA VISUALIZATION ###
+    arch = mapping.graph_visu()
     dot,nodes = visualGraph.arch_struct(arch)
     visualGraph.build_dot(dot,nodes,[8,8])
 
+    ### GRAPH TOTAL_COST X N_SWAPS ###
+    visualGraph.sa_curve(mapping.get_allcost())
 
-    ### HISTOGRAM OF N TIMES A PE WAS USED ###
-    # visualGraph.num_pes_used(10,mapping,GRN)
+    # ### HISTOGRAM OF N TIMES A PE WAS USED ###
+    # # visualGraph.num_pes_used(10,mapping,GRN)
 
-    print(mapping.get_num_swaps())
+    # print(mapping.get_num_swaps())
 
 
 

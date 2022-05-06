@@ -3,6 +3,7 @@ import pydot
 import pandas as pd
 import matplotlib.pyplot as plt
 import altair as alt
+from sqlalchemy import Constraint
 from mappingGRN import mappingGRN
 
 
@@ -86,24 +87,74 @@ def build_dot(graph: pydot.Dot, nodes: list, dim: list) -> None:
     f.close()
 
 
+def to_pydot(N):
+    """Returns a pydot graph from a NetworkX graph N.
 
+    Parameters
+    ----------
+    N : NetworkX graph
+      A graph created with NetworkX
+
+    Examples
+    --------
+    >>> K5 = nx.complete_graph(5)
+    >>> P = nx.nx_pydot.to_pydot(K5)
+
+    Notes
+    -----
+    This function is derived from NetworkX method (see more on: https://networkx.org/documentation/stable/reference/generated/networkx.drawing.nx_pydot.to_pydot.html)
+
+    """
+    import pydot
+
+    # set Graphviz graph type
+    if N.is_directed():
+        graph_type = "digraph"
+    else:
+        graph_type = "graph"
+    strict = nx.number_of_selfloops(N) == 0 and not N.is_multigraph()
+
+    name = N.name
+    graph_defaults = N.graph.get("graph", {})
+    if name == "":
+        P = pydot.Dot("", graph_type=graph_type, strict=strict, **graph_defaults)
+    else:
+        P = pydot.Dot(
+            f'"{name}"', graph_type=graph_type, strict=strict, **graph_defaults
+        )
+    try:
+        P.set_node_defaults(style = 'filled',
+                            fixedsize = 'false',
+                            width = '0.6')
+    except KeyError:
+        pass
+    try:
+        P.set_edge_defaults(constraint = 'false')
+    except KeyError:
+        pass
+
+    for n, nodedata in N.nodes(data=True):
+        str_nodedata = {k: str(v) for k, v in nodedata.items()}
+        p = pydot.Node(str(n), **str_nodedata)
+        P.add_node(p)
+
+    if N.is_multigraph():
+        for u, v, key, edgedata in N.edges(data=True, keys=True):
+            str_edgedata = {k: str(v) for k, v in edgedata.items() if k != "key"}
+            edge = pydot.Edge(str(u), str(v), key=str(key), **str_edgedata)
+            P.add_edge(edge)
+
+    else:
+        for u, v, edgedata in N.edges(data=True):
+            str_edgedata = {k: str(v) for k, v in edgedata.items()}
+            edge = pydot.Edge(str(u), str(v), **str_edgedata)
+            P.add_edge(edge)
+    return P
  
 
 def arch_struct(graph: nx.DiGraph):
 
-    label_dict = {node : "pe" + str(label) for node,label in zip(graph.nodes(),graph.nodes())}
-    
     # set all nodes attributes
-    nx.set_node_attributes(graph,'filled','style')
-    nx.set_node_attributes(graph,'square','shape')
-    nx.set_node_attributes(graph,'false','fixedsize')
-    nx.set_node_attributes(graph,'0.6','width')
-
-
-    # set all edges attributes
-    nx.set_edge_attributes(graph,'false','constraint')
-
-        
-
-    return nx.nx_pydot.to_pydot(graph) , list(graph.nodes())
+    # nx.set_node_attributes(graph,'square','shape')
+    return to_pydot(graph) , list(graph.nodes())
 

@@ -1,5 +1,6 @@
 from asyncio import new_event_loop
 from dbm import dumb
+from dis import dis
 from opcode import opname
 from tokenize import Double
 from turtle import position
@@ -34,9 +35,10 @@ class mappingGRN:
 
 
         nx.set_node_attributes(self.cgra,'8','fontsize')
-        nx.set_node_attributes(self.cgra,'#FFc1c1','fillcolor')
+        nx.set_node_attributes(self.cgra,'#FFFFFF','fillcolor')
         nx.set_node_attributes(self.cgra,' ','label')
         nx.set_node_attributes(self.cgra,' ','tooltip')
+        nx.set_node_attributes(self.cgra,'square','shape')
 
         f.close()
 
@@ -96,6 +98,15 @@ class mappingGRN:
                 print('-', end=' ')
         print()
 
+    def get_all_stats(self) -> None:
+        print(
+            f"{'Number of PEs in CGRA:' : <30}{self.get_arc_size() : >10}",
+            f"\n{'Number of genes in the GRN:' : <30}{self.get_grn().number_of_nodes() : >10}",
+            f"\n{'Total number of swaps:' : <30}{self.get_num_swaps() : >10}",
+            f"\n{'Total cost:' : <30}{self.total_edge_cost() : >10}",
+            f"\n{'Worst path cost:' : <30}{self.get_worstcase() : >10}"
+        )
+                                                                                
 
     # METHODS
     def is_monomorphism(self, GRN: nx.DiGraph) -> bool:
@@ -108,8 +119,6 @@ class mappingGRN:
             m = nx.algorithms.isomorphism.DiGraphMatcher(self.cgra,GRN)
             m_list = list(m.subgraph_monomorphisms_iter())
         return m_list
-
-
 
 
     def __random_mapping(self) -> None: 
@@ -184,22 +193,72 @@ class mappingGRN:
         """
         self.simulated_annealing()
 
-        for node in self.grn.nodes():
-            arch_node = self.__grn_2_arc(node)
-            nx.set_node_attributes(self.cgra, {arch_node: {'label':node}})
+        # list of lists where each one is a path in the GRN on CGRA
+        paths = []
+        colors = {}
+        
 
+        # dict that count 0. how many times an PE is source
+        #                 1. how many times an PE is target
+        #                 2. how many times an PE is pasage for each PE
+        # dict[PE] = [0,1,2]
+        pe_stats = {pe : [0,0,0] for pe in range(self.get_arc_size())}
                 
         for node in self.grn.nodes():
             pe_source = self.__grn_2_arc(node)
+            pe_stats[pe_source][0] += 1
             for neighbor in self.grn.neighbors(node):
                 pe_target = self.__grn_2_arc(neighbor)
+                pe_stats[pe_target][1] += 1
                 distance,path = nx.single_source_dijkstra(self.cgra,pe_source,pe_target)
-                color = ["#"+''.join([rand.choice('ABCDEF0123456789') for i in range(6)])]
                 if distance <= self.get_worstcase() * 0.5: continue
-                for path_node,i in zip(path,range(len(path))):
-                    if path_node == path[-1]: break
-                    self.cgra[path_node][path[i+1]]['color'] = color[0]
-                    self.cgra[path_node][path[i+1]]['tooltip'] = "{} to {}".format(node,neighbor)
+                if distance not in colors.keys():
+                    while True:
+                        color = ["#"+''.join([rand.choice('ABCDEF0123456789') for i in range(6)])]
+                        if color not in colors.values(): break
+                    colors[distance] = color
+                paths.append([path,distance])
+            nx.set_node_attributes(self.cgra,{pe_source: {'fillcolor':'#666666'}}) #fill color for PEs with a gene in
+            
+
+        # add edge attributes:
+        #                     a) colors by path's distance
+        #                     b) tooltip showing path's source and target: pe_name(gene_name) to pe_name(gene_name) 
+        for path,distance in paths:
+            for path_node,i in zip(path,range(len(path))):
+                if path_node == path[-1]: break
+                if i > 0: pe_stats[path_node][2] += 1
+                self.cgra[path_node][path[i+1]]['color'] = colors[distance][0]
+                self.cgra[path_node][path[i+1]]['tooltip'] = "{}({}) to {}({})".format(path[0],
+                                                                                        self.__arc_2_grn(path[0]),
+                                                                                        path[-1],
+                                                                                        self.__arc_2_grn(path[-1]))
+
+        # add node attributes:
+        #                     a) fillcolor of PEs used as bridge
+        #                     b) label showing PEs stats: in degree, out degree, bridge count
+        #                     c) tooltip showing gene's name in PE
+        for pe in self.cgra.nodes():
+            grn_node = self.__arc_2_grn(pe)
+            if (pe_stats[pe][0] == 0 and pe_stats[pe][1] == 0 and pe_stats[pe][2] != 0):
+                nx.set_node_attributes(self.cgra,{pe: {'fillcolor':'#bdbdbd'}}) #fill color for PEs used as bridge
+            nx.set_node_attributes(self.cgra, {pe: {'label':pe_stats[pe]}})
+            nx.set_node_attributes(self.cgra,{pe: {'tooltip':f"name: {grn_node},\nin_degree: {self.cgra.in_degree(pe)},\nout_degree: {self.cgra.out_degree(pe)}" }})
+
+
+        bridge_dict = {}
+        for k, v in pe_stats.items():
+            bridge_dict[k] = (v[0] + v[1] + v[2])
+
+        bridge_dict = {k: v for k, v in sorted(bridge_dict.items(), key=lambda item: item[1])}
+        values = list(bridge_dict.values())
+        max = values[-1]
+
+        for pe in bridge_dict.keys():
+            if bridge_dict[pe] == max : 
+                nx.set_node_attributes(self.cgra,{pe: {'shape': 'Msquare'}})
+
+
 
     
         return self.get_cgra()
@@ -381,6 +440,7 @@ class mappingGRN:
             T *= 0.999
 
 
+        self.get_all_stats()
 
 
 
