@@ -6,7 +6,7 @@ from tokenize import Double
 from turtle import position
 
 from numpy import double, mat
-import json2graph
+import include.json2graph as json2graph
 import networkx as nx
 import json
 import math 
@@ -169,9 +169,12 @@ class mappingGRN:
         return key_list[position]
 
 
-    def __arc_2_grn(self,int):
-        try:    return self.r_mapping[int]
-        except: return int
+    def __arc_2_grn(self,node):
+        try: 
+            return self.r_mapping[node]   
+        except: return None
+ 
+        
 
     def graph_visu(self) -> nx.DiGraph:
         """ Graph visualization with .dot 
@@ -334,6 +337,49 @@ class mappingGRN:
         return (init_cost - local_cost + new_local_cost)
 
 
+    def __fit(self,u,v,peU,peV) -> bool:
+        """ Give two GRN's nodes and two pe of the CGRA, validate if the swap between this two
+            PEs is the optimal based on the in_degree of each parameter
+
+            Parameters
+            ----------
+            u: Node Label
+                A node in the GRN graph
+
+            v: Node Label
+                A node in the GRN graph
+
+            peU: Node Label
+                A node in the CGRA graph
+
+            peV: Node Label
+                A node in the CGRA graph
+
+            Returns
+            ----------
+            True if it is a optimal swap, false otherwise.
+
+            Notes
+            ----------
+            For more, access: https://excalidraw.com/#json=VpNWRIhAEcB5gAjIEA6BK,AyAnSPqGGmpOy_j6NGb6ZA
+        """
+
+        peU_in_degree = self.cgra.in_degree(peU)
+        peV_in_degree = self.cgra.in_degree(peV)
+
+        u_in_degree = self.grn.in_degree(u)
+        v_in_degree = self.grn.in_degree(v)
+
+        fit_v = False
+
+
+        if peU_in_degree == peV_in_degree: return True
+
+        if (peU_in_degree - v_in_degree >= 0 ) and (peV_in_degree - u_in_degree >= 0): return True
+
+        return False        
+
+
     def __randpes(self, inf, sup):
         # Choose a random pe between inf and sup
         peU = rand.randint(inf,sup)
@@ -410,7 +456,7 @@ class mappingGRN:
             range(n_range),
             position=0,
             leave = True,
-            desc= f"Simulated Annealing: "
+            desc= f"Simulated Annealing with {self.grn.number_of_nodes()} genes and {self.get_arc_size()} PEs:"
         ):
             # Choose random Pe's
             peU, peV = self.__randpes(inf,sup)
@@ -418,6 +464,12 @@ class mappingGRN:
             # map pe's to grn nodes
             u = self.__arc_2_grn(peU)
             v = self.__arc_2_grn(peV)
+
+
+            # Verify if peU and peV has grn's nodes in it
+            # and if grn's nodes fits in the PEs
+            if u == None or v == None: continue
+            if not self.__fit(u,v,peU,peV): continue
 
             # Calculate new cost 
             new_cost = self.__switching_cost(u,v,peU,peV,init_cost)

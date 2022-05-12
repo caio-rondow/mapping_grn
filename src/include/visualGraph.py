@@ -1,3 +1,4 @@
+import os
 import networkx as nx 
 import pydot
 import pandas as pd
@@ -38,6 +39,18 @@ def sa_curve(data):
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     ax.plot(df[1], df[0], color='tab:blue')
+    ax.set_title('Simulated Anealling Cost')
+    ax.set_xlabel('num swaps')
+    ax.set_ylabel('total cost')
+
+
+    path = "C:\\Users\\Windows 10\\Google Drive\\Iniciação\\codes\\mapping_grn\\benchmarks"
+    file_name = f"cost_graph.svg"
+
+    completeName = os.path.join(path, file_name)
+
+
+    plt.savefig(completeName,dpi=150)
     plt.show()
 
 
@@ -82,7 +95,13 @@ def build_dot(graph: pydot.Dot, nodes: list, dim: list) -> None:
                 graph_string = graph_string + "{} -> ".format(nodes[j + dim[1] * i])
 
     graph_string = graph_string + "}"
-    with open("output.dot", 'w') as f:
+
+    path = "C:\\Users\\Windows 10\\Google Drive\\Iniciação\\codes\\mapping_grn\\benchmarks"
+    file_name = f"{len(nodes)}nodes_{dim[0]}x{dim[1]}cgra.dot"
+
+    completeName = os.path.join(path, file_name)
+
+    with open(completeName, 'w') as f:
         f.write(graph_string)
     f.close()
 
