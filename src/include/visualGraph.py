@@ -5,36 +5,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import altair as alt
 from sqlalchemy import Constraint
-from mappingGRN import mappingGRN
+from src.mappingGRN import mappingGRN
 
 
 
-def num_pes_used(n_simu: int, mapping: mappingGRN, GRN: nx.DiGraph) -> pd.DataFrame:
-
-    arc = mapping.get_cgra()
-    data = {pe : 0 for pe in arc.nodes()}
-
-    for i in range(n_simu):
-        mapping.simulated_annealing()
-        pe_dict = mapping.get_mapped_grn()
-        for pe in list(pe_dict.keys()):
-            if pe_dict[pe] in GRN.nodes():
-                data[pe] += 1
-
-    df = pd.DataFrame(list(data.items()), columns=['PE','N times used'])
-    
-    chart = alt.Chart(df).mark_bar().encode(
-    alt.X("PE:N"),
-    alt.Y("N times used"),
-    )
-
-    chart.save('histogram_{}PEs_{}T_{}GRN.html'.format(mapping.get_arc_size(),n_simu,GRN.number_of_nodes()))
-
-    return df
-
-
-
-def sa_curve(data):
+def sa_curve(data,fname):
     df = pd.DataFrame(data)
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
@@ -44,8 +19,9 @@ def sa_curve(data):
     ax.set_ylabel('total cost')
 
 
-    path = "C:\\Users\\Windows 10\\Google Drive\\Iniciação\\codes\\mapping_grn\\benchmarks"
-    file_name = f"cost_graph.svg"
+    path = ""
+    # path = "C:\\Users\\Windows 10\\Google Drive\\Iniciação\\codes\\mapping_grn\\benchmarks"
+    file_name = f"{fname}.svg"
 
     completeName = os.path.join(path, file_name)
 
@@ -55,7 +31,7 @@ def sa_curve(data):
 
 
 
-def build_dot(graph: pydot.Dot, nodes: list, dim: list) -> None:
+def build_dot(graph: pydot.Dot, nodes: list, dim: list, fname: str) -> None:
 
     '''
         dim = row x col -> dim[0] = row din[1] = col
@@ -96,8 +72,8 @@ def build_dot(graph: pydot.Dot, nodes: list, dim: list) -> None:
 
     graph_string = graph_string + "}"
 
-    path = "C:\\Users\\Windows 10\\Google Drive\\Iniciação\\codes\\mapping_grn\\benchmarks"
-    file_name = f"{len(nodes)}nodes_{dim[0]}x{dim[1]}cgra.dot"
+    path = ""
+    file_name = f"{fname}.dot"
 
     completeName = os.path.join(path, file_name)
 

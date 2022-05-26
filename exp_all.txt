@@ -1,0 +1,21 @@
+/misc/grn_benchmarks-main/100-200/CD4 T cell signaling/expr/expressions.ALL.txt
+/misc/grn_benchmarks-main/100-200/EGFR & ErbB Signaling/expr/expressions.ALL.txt
+/misc/grn_benchmarks-main/100-200/signal transduction in fibroblasts/expr/expressions.ALL.txt
+/misc/grn_benchmarks-main/40-100/Guard Cell Abscisic Acid Signaling/expr/expressions.ALL.txt
+/misc/grn_benchmarks-main/40-100/Differentiation of T lymphocytes/expr/expressions.ALL.txt
+/misc/grn_benchmarks-main/40-100/IGVH mutations in chronic lymphocytic leukemia/expr/expressions.ALL.txt
+/misc/grn_benchmarks-main/40-100/Yeast Apoptosis/expr/expressions.ALL.txt
+/misc/grn_benchmarks-main/40-100/IL-6 Signalling/expr/expressions.ALL.txt
+/misc/grn_benchmarks-main/40-100/Bortezomib Responses in U266 Human Myelo/expr/expressions.ALL.txt
+/misc/grn_benchmarks-main/40-100/Apoptosis network/expr/expressions.ALL.txt
+/misc/grn_benchmarks-main/40-100/Lymphopoiesis Regulatory Network/expr/expressions.ALL.txt
+/misc/grn_benchmarks-main/40-100/Cholesterol Regulatory Pathway/expr/expressions.ALL.txt
+/misc/grn_benchmarks-main/40-100/Treatment of Castration-Resistant Prostate Ca/expr/expressions.ALL.txt
+/misc/grn_benchmarks-main/40-100/HGF Signaling in Keratinocytes/expr/expressions.ALL.txt
+/misc/grn_benchmarks-main/40-100/Glucose Repression Signaling 2009/expr/expressions.ALL.txt
+/misc/grn_benchmarks-main/40-100/T-LGL Survival Network 2011/expr/expressions.ALL.txt
+/misc/grn_benchmarks-main/40-100/B bronchiseptica and T retortaeformis coinfectio/expr/expressions.ALL.txt
+/misc/grn_benchmarks-main/40-100/MAPK Cancer Cell Fate Network/expr/expressions.ALL.txt
+/misc/grn_benchmarks-main/40-100/PC12 Cell Differentiation/expr/expressions.ALL.txt
+/misc/grn_benchmarks-main/200 above/Erb-reception/expr/expressions.ALL.txt
+/misc/grn_benchmarks-main/200 above/macrophave activation/expr/expressions.ALL.txt

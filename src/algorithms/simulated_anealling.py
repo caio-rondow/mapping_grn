@@ -1,9 +1,8 @@
 from tqdm import tqdm
-import mappingGRN as mp
+import src.mappingGRN
 import networkx as nx
 import random as rand
 import math
-
 
 
 def __evaluate_move(mp,u,v,peU,peV) -> int:
@@ -15,13 +14,13 @@ def __evaluate_move(mp,u,v,peU,peV) -> int:
         if (mp.grn.has_node(u)==True):
             for w in mp.grn.neighbors(u):
                 if w==u: continue # Calculate distance only for the neighbors of v
-                peW = mp.__grn_2_arc(w)
+                peW = mp.grn_2_arc(w)
                 localC      += nx.dijkstra_path_length(mp.cgra,peU,peW)
                 newLocalC   += nx.dijkstra_path_length(mp.cgra,peV,peW)    
             
             for w in mp.grn.predecessors(u):
                 if w==u: continue # Calculate distance only for the neighbors of v
-                peW = mp.__grn_2_arc(w)
+                peW = mp.grn_2_arc(w)
                 localC      += nx.dijkstra_path_length(mp.cgra,peW,peU)
                 newLocalC   += nx.dijkstra_path_length(mp.cgra,peW,peV)
 
@@ -41,8 +40,8 @@ def __switching_cost(mp,u,v,peU,peV,init_cost) -> int:
     new_local_cost  = 0 # -> total new local cost (uNew_local_cost + vNew_local_cost)  
 
     # get partial local costs and new local costs
-    uLocal_cost, uNew_local_cost = __evaluate_move(u,v,peU,peV)
-    vLocal_cost, vNew_local_cost = __evaluate_move(v,u,peV,peU)
+    uLocal_cost, uNew_local_cost = __evaluate_move(mp,u,v,peU,peV)
+    vLocal_cost, vNew_local_cost = __evaluate_move(mp,v,u,peV,peU)
 
     # get total local cost and new local_cost
     local_cost      = uLocal_cost + vLocal_cost
@@ -98,14 +97,14 @@ def __fit(mp,u,v,peU,peV) -> bool:
 def __randpes(mp, inf, sup):
     # Choose a random pe between inf and sup
     peU = rand.randint(inf,sup)
-    u   = mp.__arc_2_grn(peU)
+    u   = mp.arc_2_grn(peU)
 
     # Case peU is empty
     if( mp.grn.has_node(u)==False ):
         # Choose a random grn node
         v = rand.choice( list( mp.r_mapping.values()) )
         # and find it in arc
-        peV = mp.__grn_2_arc(v)
+        peV = mp.grn_2_arc(v)
     else:
         # Choose a random pe between inf and sup
         peV = rand.randint(inf,sup)
@@ -123,7 +122,7 @@ def __range(max,dec,min) -> int:
 
 
 
-def simulated_annealing(mp) -> None:
+def simulated_annealing(mp,data = False) -> None:
     """ 
         Aplies Simulated Annealing algorithm on a GRN mapped into CGRA
         - Starts with a random mapped GRN
@@ -158,13 +157,17 @@ def simulated_annealing(mp) -> None:
 
             decrease temperature
     """
-
     # INIT
+    grn = mp.get_grn()
     T=100                               # Start Simulated Annealing temperature
     init_cost=mp.total_edge_cost()    # Calculate current init_cost edge cost
     # interval of pe's
-    inf = 0
-    sup = mp.arc_size-1
+    if grn.number_of_nodes() > 64:
+        inf = 0
+        sup = mp.get_arc_size()-1
+    else: 
+        inf = 32
+        sup = 144
     n_range = __range(T,0.999,0.00001)
 
     for interation in tqdm(
@@ -174,20 +177,20 @@ def simulated_annealing(mp) -> None:
         desc= f"Simulated Annealing with {mp.grn.number_of_nodes()} genes and {mp.get_arc_size()} PEs:"
     ):
         # Choose random Pe's
-        peU, peV = __randpes(inf,sup)
+        peU, peV = __randpes(mp,inf,sup)
         
         # map pe's to grn nodes
-        u = mp.__arc_2_grn(peU)
-        v = mp.__arc_2_grn(peV)
+        u = mp.arc_2_grn(peU)
+        v = mp.arc_2_grn(peV)
 
 
         # Verify if peU and peV has grn's nodes in it
         # and if grn's nodes fits in the PEs
         if u == None or v == None: continue
-        if not __fit(u,v,peU,peV): continue
+        if not __fit(mp,u,v,peU,peV): continue
 
         # Calculate new cost 
-        new_cost = __switching_cost(u,v,peU,peV,init_cost)
+        new_cost = __switching_cost(mp,u,v,peU,peV,init_cost)
 
         # Calculate acceptance probability
         dC      = abs(new_cost - init_cost) # variation of cost, delta C
@@ -207,5 +210,6 @@ def simulated_annealing(mp) -> None:
         T *= 0.999
 
 
-    mp.get_all_stats()
+    if data == True:
+        mp.get_all_stats()
 
